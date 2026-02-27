@@ -48,8 +48,13 @@ function normalizeOptionLabel(rawLabel, index) {
   return fallback;
 }
 
-function normalizeQuestionType(rawQuestion, options) {
-  const rawType = firstNonEmpty(rawQuestion?.type, rawQuestion?.questionType).toLowerCase();
+function normalizeQuestionType(rawQuestion, options, sectionQuestionType) {
+  const rawType = firstNonEmpty(
+    rawQuestion?.type,
+    rawQuestion?.questionType,
+    rawQuestion?.question_type,
+    sectionQuestionType
+  ).toLowerCase();
 
   if (
     rawType.includes("multiple") ||
@@ -104,44 +109,64 @@ function normalizeOptions(rawQuestion) {
           firstNonEmpty(rawOption.key, rawOption.letter, rawOption.id),
           index
         );
-        return { label, text };
+        return {
+          label,
+          text,
+          isCorrect: Boolean(rawOption.is_correct ?? rawOption.isCorrect ?? rawOption.correct)
+        };
       }
 
       const text = firstNonEmpty(rawOption);
       if (!text) {
         return null;
       }
-      return { label: toLetter(index), text };
+      return { label: toLetter(index), text, isCorrect: false };
     })
     .filter(Boolean);
 }
 
-function normalizeQuestion(rawQuestion) {
+function normalizeQuestion(rawQuestion, sectionQuestionType) {
   const options = normalizeOptions(rawQuestion);
-  const type = normalizeQuestionType(rawQuestion, options);
+  const type = normalizeQuestionType(rawQuestion, options, sectionQuestionType);
   const text = firstNonEmpty(
     rawQuestion?.prompt,
     rawQuestion?.question,
+    rawQuestion?.question_text,
+    rawQuestion?.questionText,
     rawQuestion?.text,
     rawQuestion?.statement,
     rawQuestion?.enunciado
   );
-  const instructions = firstNonEmpty(rawQuestion?.instructions, rawQuestion?.instruction);
+  const instructions = firstNonEmpty(
+    rawQuestion?.instructions,
+    rawQuestion?.instruction,
+    rawQuestion?.question_instructions
+  );
 
-  const answer =
+  let answer =
     rawQuestion?.correctAnswer ??
+    rawQuestion?.correct_answer ??
     rawQuestion?.answer ??
     rawQuestion?.correct ??
     rawQuestion?.solution ??
     rawQuestion?.expectedAnswer ??
-    rawQuestion?.rightAnswer;
+    rawQuestion?.rightAnswer ??
+    rawQuestion?.right_answer;
+
+  if (answer === undefined || answer === null || answer === "") {
+    const marked = options.find((option) => option.isCorrect);
+    if (marked) {
+      answer = marked.label;
+    }
+  }
 
   return {
     type,
     text,
     instructions,
     options,
-    answer
+    answer,
+    lines: Number.isFinite(rawQuestion?.lines) ? Number(rawQuestion.lines) : undefined
   };
 }
 
@@ -155,14 +180,32 @@ function normalizeSection(rawSection, index) {
   );
 
   return {
-    title: firstNonEmpty(rawSection?.title, rawSection?.name, `Section ${index + 1}`),
+    title: firstNonEmpty(
+      rawSection?.title,
+      rawSection?.section_title,
+      rawSection?.name,
+      `Section ${index + 1}`
+    ),
     instructions: firstNonEmpty(
       rawSection?.instructions,
+      rawSection?.section_instructions,
       rawSection?.description,
       rawSection?.guidance
     ),
-    passage: firstNonEmpty(rawSection?.passage, rawSection?.reading, rawSection?.text),
-    questions: rawQuestions.map(normalizeQuestion).filter((question) => question.text || question.options.length)
+    passage: firstNonEmpty(
+      rawSection?.passage,
+      rawSection?.reading,
+      rawSection?.reading_passage,
+      rawSection?.text
+    ),
+    questions: rawQuestions
+      .map((question) => normalizeQuestion(question, rawSection?.question_type))
+      .filter(
+        (question) =>
+          question.text ||
+          question.options.length ||
+          (Number.isFinite(question.lines) && question.lines > 0)
+      )
   };
 }
 
@@ -177,13 +220,19 @@ function normalizeExamData(examData) {
   );
 
   return {
-    title: firstNonEmpty(safeExamData.title, safeExamData.examTitle, "Exam"),
+    title: firstNonEmpty(
+      safeExamData.title,
+      safeExamData.examTitle,
+      safeExamData.exam_title,
+      "Exam"
+    ),
     subject: firstNonEmpty(safeExamData.subject, safeExamData.course, safeExamData.area, "General"),
     grade: firstNonEmpty(safeExamData.grade, safeExamData.gradeLevel, safeExamData.level, "N/A"),
     date: firstNonEmpty(safeExamData.date, safeExamData.examDate),
     instructions: firstNonEmpty(
       safeExamData.instructions,
       safeExamData.generalInstructions,
+      safeExamData.general_instructions,
       safeExamData.description
     ),
     sections: rawSections.map(normalizeSection).filter((section) => section.questions.length > 0)
@@ -216,6 +265,10 @@ function resolveMultipleChoiceAnswer(question) {
   const answer = question.answer;
 
   if (answer === undefined || answer === null || answer === "") {
+    const marked = options.find((option) => option.isCorrect);
+    if (marked) {
+      return `${marked.label}) ${marked.text}`;
+    }
     return "";
   }
 
