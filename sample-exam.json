@@ -1,0 +1,41 @@
+{
+  "title": "English Midterm",
+  "subject": "English",
+  "grade": "6th Grade",
+  "date": "2026-02-27",
+  "instructions": "Read each question carefully and answer in the space provided.",
+  "sections": [
+    {
+      "title": "Reading Comprehension",
+      "instructions": "Read the text and answer the questions.",
+      "passage": "Mary visited London with her family during summer vacation.",
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "question": "Where did Mary travel?",
+          "options": ["Paris", "London", "Madrid", "Rome"],
+          "correctAnswer": 1
+        },
+        {
+          "type": "true_false",
+          "question": "Mary traveled alone.",
+          "correctAnswer": false
+        }
+      ]
+    },
+    {
+      "title": "Grammar",
+      "questions": [
+        {
+          "type": "fill_blank",
+          "question": "Complete: I ___ to school every day.",
+          "correctAnswer": "go"
+        },
+        {
+          "type": "open",
+          "question": "Write a short paragraph about your favorite book."
+        }
+      ]
+    }
+  ]
+}

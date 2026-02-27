@@ -1,0 +1,21 @@
+{
+  "name": "califica-api",
+  "version": "1.0.0",
+  "description": "Califica exam document generation API",
+  "main": "server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "smoke": "node smoke-test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "docx": "^9.5.1",
+    "express": "^4.21.2",
+    "puppeteer": "^24.4.0"
+  }
+}
