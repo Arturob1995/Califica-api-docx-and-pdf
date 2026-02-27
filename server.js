@@ -90,6 +90,17 @@ function safeFileName(baseName) {
     .slice(0, 60) || "exam";
 }
 
+function toFilePayload(buffer, fileName, mimeType) {
+  const base64 = buffer.toString("base64");
+  return {
+    success: true,
+    fileName,
+    mimeType,
+    base64,
+    dataUrl: `data:${mimeType};base64,${base64}`
+  };
+}
+
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
@@ -106,8 +117,11 @@ app.post("/pdf", authenticateApiKey, async (req, res) => {
     const fileName = `${safeFileName(normalized.title)}.pdf`;
 
     res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Length", String(pdfBuffer.length));
+    res.setHeader("Content-Transfer-Encoding", "binary");
+    res.setHeader("Cache-Control", "no-store");
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-    return res.status(200).send(pdfBuffer);
+    return res.status(200).end(pdfBuffer);
   } catch (error) {
     console.error("PDF generation failed:", error);
     return res.status(500).json({ error: "PDF generation failed" });
@@ -134,6 +148,54 @@ app.post("/docx", authenticateApiKey, async (req, res) => {
   } catch (error) {
     console.error("DOCX generation failed:", error);
     return res.status(500).json({ error: "DOCX generation failed" });
+  }
+});
+
+app.post("/pdf-json", authenticateApiKey, async (req, res) => {
+  try {
+    const examData = extractExamData(req.body);
+    if (!hasValidExamBody(examData)) {
+      return res.status(400).json({ error: "Invalid examData body" });
+    }
+
+    const normalized = normalizeExamData(examData);
+    const pdfBuffer = await generatePdf(examData);
+    const fileName = `${safeFileName(normalized.title)}.pdf`;
+
+    return res.status(200).json(
+      toFilePayload(
+        pdfBuffer,
+        fileName,
+        "application/pdf"
+      )
+    );
+  } catch (error) {
+    console.error("PDF JSON generation failed:", error);
+    return res.status(500).json({ error: "PDF JSON generation failed" });
+  }
+});
+
+app.post("/docx-json", authenticateApiKey, async (req, res) => {
+  try {
+    const examData = extractExamData(req.body);
+    if (!hasValidExamBody(examData)) {
+      return res.status(400).json({ error: "Invalid examData body" });
+    }
+
+    const normalized = normalizeExamData(examData);
+    const docxBuffer = await generateDocx(examData);
+    const fileName = `${safeFileName(normalized.title)}.docx`;
+
+    return res.status(200).json(
+      toFilePayload(
+        docxBuffer,
+        fileName,
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      )
+    );
+  } catch (error) {
+    console.error("DOCX JSON generation failed:", error);
+    return res.status(500).json({ error: "DOCX JSON generation failed" });
   }
 });
 

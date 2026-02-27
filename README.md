@@ -7,12 +7,26 @@ Express API for generating student-facing PDF and DOCX exams, with an answer key
 - `GET /health` -> `{ "status": "ok" }`
 - `POST /pdf` -> `application/pdf`
 - `POST /docx` -> `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+- `POST /pdf-json` -> JSON with base64 PDF payload
+- `POST /docx-json` -> JSON with base64 DOCX payload
 
 Protected endpoints require the `x-api-key` header with the value from `API_KEY`.
 
 Request body can be either:
 - raw exam object: `{ "title": "...", "sections": [...] }`
 - wrapped exam object: `{ "examData": { ... } }` (also supports `data`, `payload`, or `exam`)
+
+`/pdf-json` and `/docx-json` return this shape:
+
+```json
+{
+  "success": true,
+  "fileName": "science-and-reading-exam.pdf",
+  "mimeType": "application/pdf",
+  "base64": "<very long base64 string>",
+  "dataUrl": "data:application/pdf;base64,<same base64>"
+}
+```
 
 ## Local run
 
