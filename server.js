@@ -8,45 +8,74 @@ const app = express();
 const port = Number(process.env.PORT || 3000);
 
 app.use(cors());
-app.use(express.json({ limit: "5mb" }));
-app.use(express.text({ limit: "5mb", type: ["text/plain", "text/html", "application/x-www-form-urlencoded"] }));
 
-// Bubble.io sends JSON with wrong Content-Type and/or double-escaped quotes
-// (""key"" instead of "key"). This middleware normalises all Bubble quirks.
+// Capture ALL request bodies as raw Buffers regardless of Content-Type.
+// This avoids express.json() throwing on malformed bodies from Bubble.
+app.use(express.raw({ limit: "5mb", type: "*/*" }));
+
+// Parse the raw buffer into JSON, handling every Bubble.io quirk:
+//  - wrong Content-Type headers
+//  - double-escaped quotes (""key"")
+//  - outer-quote wrapping ("{ ... }")
+//  - URL-encoded bodies (%7B%22...%22%7D)
+//  - form-encoded wrappers (data={...})
 app.use((req, _res, next) => {
-  if (typeof req.body === "string") {
-    let raw = req.body.trim();
+  if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+    req.body = {};
+    return next();
+  }
 
-    // 1) Strip optional outer quotes that Bubble wraps around the whole body
-    if (raw.length >= 2 && raw[0] === '"' && raw[raw.length - 1] === '"') {
-      raw = raw.slice(1, -1);
-    }
+  let raw = req.body.toString("utf8").trim();
 
-    // 2) Fix Bubble's doubled-quote escaping: ""key"" -> "key"
-    if (raw.includes('""')) {
-      raw = raw.replace(/""/g, '"');
-    }
+  // Strip UTF-8 BOM if present
+  if (raw.charCodeAt(0) === 0xfeff) {
+    raw = raw.slice(1);
+  }
 
-    // 3) Try parsing the cleaned string as JSON
+  console.log("[body-parser] Content-Type:", req.headers["content-type"]);
+  console.log("[body-parser] raw body (first 300 chars):", raw.slice(0, 300));
+
+  // 1) Try parsing as-is (happy path: proper JSON with correct Content-Type)
+  try { req.body = JSON.parse(raw); return next(); } catch (_) {}
+
+  // 2) URL-decode if the body looks URL-encoded
+  if (raw.includes("%7B") || raw.includes("%22")) {
     try {
-      req.body = JSON.parse(raw);
-    } catch (_) {
-      // last resort: try parsing the original untouched string
-      try {
-        req.body = JSON.parse(req.body);
-      } catch (_2) {
-        // leave it as-is; the route handler will reject it
-      }
-    }
+      const decoded = decodeURIComponent(raw);
+      req.body = JSON.parse(decoded);
+      return next();
+    } catch (_) {}
   }
-  next();
-});
 
-app.use((err, req, res, next) => {
-  if (err && err.type === "entity.parse.failed") {
-    return res.status(400).json({ error: "Invalid JSON body" });
+  // 3) Form-encoded wrapper: key=value  (e.g. data={...} or payload={...})
+  if (raw.includes("=") && !raw.startsWith("{") && !raw.startsWith('"')) {
+    const value = raw.slice(raw.indexOf("=") + 1);
+    try {
+      req.body = JSON.parse(decodeURIComponent(value));
+      return next();
+    } catch (_) {}
+    try {
+      req.body = JSON.parse(value);
+      return next();
+    } catch (_) {}
   }
-  return next(err);
+
+  // 4) Strip outer quotes that Bubble wraps around the body
+  if (raw.length >= 2 && raw[0] === '"' && raw[raw.length - 1] === '"') {
+    raw = raw.slice(1, -1);
+  }
+
+  // 5) Fix doubled-quote escaping: ""key"" -> "key"
+  if (raw.includes('""')) {
+    raw = raw.replace(/""/g, '"');
+  }
+
+  try { req.body = JSON.parse(raw); return next(); } catch (_) {}
+
+  // Nothing worked — log and leave body as empty object for route to reject
+  console.error("[body-parser] could not parse body");
+  req.body = {};
+  next();
 });
 
 function authenticateApiKey(req, res, next) {
