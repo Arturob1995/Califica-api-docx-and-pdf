@@ -38,7 +38,16 @@ app.use((req, _res, next) => {
   // 1) Try parsing as-is (happy path: proper JSON with correct Content-Type)
   try { req.body = JSON.parse(raw); return next(); } catch (_) {}
 
-  // 2) URL-decode if the body looks URL-encoded
+  // 2) Bubble sends literal \n \r \t instead of real whitespace — unescape them
+  if (raw.includes("\\n") || raw.includes("\\r") || raw.includes("\\t")) {
+    const unescaped = raw
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\t/g, "\t");
+    try { req.body = JSON.parse(unescaped); return next(); } catch (_) {}
+  }
+
+  // 4) URL-decode if the body looks URL-encoded
   if (raw.includes("%7B") || raw.includes("%22")) {
     try {
       const decoded = decodeURIComponent(raw);
@@ -70,12 +79,13 @@ app.use((req, _res, next) => {
     raw = raw.replace(/""/g, '"');
   }
 
-  try { req.body = JSON.parse(raw); return next(); } catch (_) {}
-
-  // Nothing worked — log and leave body as empty object for route to reject
-  console.error("[body-parser] could not parse body");
-  req.body = {};
-  next();
+  try { req.body = JSON.parse(raw); return next(); } catch (lastErr) {
+    // Nothing worked — log the last parse error for diagnosis
+    console.error("[body-parser] could not parse body:", lastErr.message);
+    console.error("[body-parser] first 50 char codes:", [...raw.slice(0, 50)].map(c => c.charCodeAt(0)).join(","));
+    req.body = {};
+    next();
+  }
 });
 
 function authenticateApiKey(req, res, next) {
