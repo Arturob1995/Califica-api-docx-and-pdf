@@ -9,6 +9,20 @@ const port = Number(process.env.PORT || 3000);
 
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));
+app.use(express.text({ limit: "5mb", type: ["text/plain", "text/html", "application/x-www-form-urlencoded"] }));
+
+// Bubble.io often sends JSON with a wrong Content-Type (text/plain, etc.)
+// or double-stringifies the body. This middleware normalises both cases.
+app.use((req, _res, next) => {
+  if (typeof req.body === "string") {
+    try {
+      req.body = JSON.parse(req.body);
+    } catch (_) {
+      // leave it as-is; the route handler will reject it
+    }
+  }
+  next();
+});
 
 app.use((err, req, res, next) => {
   if (err && err.type === "entity.parse.failed") {
