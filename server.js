@@ -11,14 +11,32 @@ app.use(cors());
 app.use(express.json({ limit: "5mb" }));
 app.use(express.text({ limit: "5mb", type: ["text/plain", "text/html", "application/x-www-form-urlencoded"] }));
 
-// Bubble.io often sends JSON with a wrong Content-Type (text/plain, etc.)
-// or double-stringifies the body. This middleware normalises both cases.
+// Bubble.io sends JSON with wrong Content-Type and/or double-escaped quotes
+// (""key"" instead of "key"). This middleware normalises all Bubble quirks.
 app.use((req, _res, next) => {
   if (typeof req.body === "string") {
+    let raw = req.body.trim();
+
+    // 1) Strip optional outer quotes that Bubble wraps around the whole body
+    if (raw.length >= 2 && raw[0] === '"' && raw[raw.length - 1] === '"') {
+      raw = raw.slice(1, -1);
+    }
+
+    // 2) Fix Bubble's doubled-quote escaping: ""key"" -> "key"
+    if (raw.includes('""')) {
+      raw = raw.replace(/""/g, '"');
+    }
+
+    // 3) Try parsing the cleaned string as JSON
     try {
-      req.body = JSON.parse(req.body);
+      req.body = JSON.parse(raw);
     } catch (_) {
-      // leave it as-is; the route handler will reject it
+      // last resort: try parsing the original untouched string
+      try {
+        req.body = JSON.parse(req.body);
+      } catch (_2) {
+        // leave it as-is; the route handler will reject it
+      }
     }
   }
   next();
