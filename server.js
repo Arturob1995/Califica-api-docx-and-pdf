@@ -41,11 +41,27 @@ app.use((req, _res, next) => {
   try { req.body = JSON.parse(raw); return next(); } catch (_) {}
 
   // 2) Bubble sends literal \n \r \t instead of real whitespace — unescape them
+  //    Only replace outside JSON string values so \n inside strings stays valid
   if (raw.includes("\\n") || raw.includes("\\r") || raw.includes("\\t")) {
-    const unescaped = raw
-      .replace(/\\n/g, "\n")
-      .replace(/\\r/g, "\r")
-      .replace(/\\t/g, "\t");
+    let unescaped = "";
+    let inStr = false;
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      if (inStr) {
+        if (ch === "\\" && i + 1 < raw.length) { unescaped += ch + raw[i + 1]; i++; }
+        else if (ch === '"') { inStr = false; unescaped += ch; }
+        else { unescaped += ch; }
+      } else {
+        if (ch === '"') { inStr = true; unescaped += ch; }
+        else if (ch === "\\" && i + 1 < raw.length) {
+          const nx = raw[i + 1];
+          if (nx === "n") { unescaped += "\n"; i++; }
+          else if (nx === "r") { unescaped += "\r"; i++; }
+          else if (nx === "t") { unescaped += "\t"; i++; }
+          else { unescaped += ch; }
+        } else { unescaped += ch; }
+      }
+    }
     try { req.body = JSON.parse(unescaped); return next(); } catch (_) {}
   }
 
