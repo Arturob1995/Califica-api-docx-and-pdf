@@ -3,6 +3,8 @@ const cors = require("cors");
 const { generatePdf, closeBrowser } = require("./pdf-generator");
 const { generateDocx } = require("./docx-generator");
 const { normalizeExamData } = require("./exam-utils");
+const { generatePDCDocx } = require("./generate-pdc-docx");
+const { generatePDCPdf, closePDCBrowser } = require("./generate-pdc-pdf");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -270,6 +272,47 @@ app.post("/docx-json", authenticateApiKey, async (req, res) => {
   }
 });
 
+// ─── PDC endpoints ──────────────────────────────────────────────────
+const VALID_NIVELES = ["inicial", "primaria", "secundaria", "multigrado"];
+
+app.post("/generate/pdc/docx", async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data || !data.nivel) return res.status(400).json({ error: "Missing: nivel" });
+    if (!VALID_NIVELES.includes(data.nivel)) return res.status(400).json({ error: "Invalid nivel" });
+    const buffer = await generatePDCDocx(data);
+    const filename = `PDC_${data.nivel}_${data.numero_pdc || 1}.docx`;
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", buffer.length);
+    res.send(buffer);
+  } catch (err) {
+    console.error("PDC DOCX error:", err);
+    res.status(500).json({ error: "Failed to generate DOCX", details: err.message });
+  }
+});
+
+app.post("/generate/pdc/pdf", async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data || !data.nivel) return res.status(400).json({ error: "Missing: nivel" });
+    if (!VALID_NIVELES.includes(data.nivel)) return res.status(400).json({ error: "Invalid nivel" });
+    const pdfBuf = Buffer.from(await generatePDCPdf(data));
+    const filename = `PDC_${data.nivel}_${data.numero_pdc || 1}.pdf`;
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Length": pdfBuf.length,
+      "Content-Transfer-Encoding": "binary",
+      "Cache-Control": "no-store",
+    });
+    res.end(pdfBuf, "binary");
+  } catch (err) {
+    console.error("PDC PDF error:", err);
+    res.status(500).json({ error: "Failed to generate PDF", details: err.message });
+  }
+});
+
 app.use((req, res) => {
   res.status(404).json({ error: "Not found" });
 });
@@ -283,6 +326,7 @@ async function shutdown(signal) {
 
   try {
     await closeBrowser();
+    await closePDCBrowser();
   } catch (error) {
     console.error("Error while closing browser:", error);
   }
