@@ -275,9 +275,26 @@ app.post("/docx-json", authenticateApiKey, async (req, res) => {
 // ─── PDC endpoints ──────────────────────────────────────────────────
 const VALID_NIVELES = ["inicial", "primaria", "secundaria", "multigrado"];
 
+function extractPDCData(body) {
+  if (body && typeof body === "object" && !Array.isArray(body) && body.nivel) return body;
+  if (typeof body === "string") {
+    try { const parsed = JSON.parse(body); if (parsed && parsed.nivel) return parsed; } catch (_) {}
+  }
+  if (body && typeof body === "object") {
+    for (const key of ["data", "payload", "pdcData"]) {
+      const val = body[key];
+      if (val && typeof val === "object" && val.nivel) return val;
+      if (typeof val === "string") {
+        try { const p = JSON.parse(val); if (p && p.nivel) return p; } catch (_) {}
+      }
+    }
+  }
+  return null;
+}
+
 app.post("/generate/pdc/docx", async (req, res) => {
   try {
-    const data = req.body;
+    const data = extractPDCData(req.body);
     if (!data || !data.nivel) return res.status(400).json({ error: "Missing: nivel" });
     if (!VALID_NIVELES.includes(data.nivel)) return res.status(400).json({ error: "Invalid nivel" });
     const buffer = await generatePDCDocx(data);
@@ -294,7 +311,7 @@ app.post("/generate/pdc/docx", async (req, res) => {
 
 app.post("/generate/pdc/pdf", async (req, res) => {
   try {
-    const data = req.body;
+    const data = extractPDCData(req.body);
     if (!data || !data.nivel) return res.status(400).json({ error: "Missing: nivel" });
     if (!VALID_NIVELES.includes(data.nivel)) return res.status(400).json({ error: "Invalid nivel" });
     const pdfBuf = Buffer.from(await generatePDCPdf(data));
