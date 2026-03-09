@@ -10,7 +10,7 @@ function escapeHtml(value) {
 }
 
 function renderQuestion(question, questionNumber) {
-  const safeText = escapeHtml(question.text || "Question");
+  const safeText = escapeHtml(question.text || "Pregunta");
   const safeInstructions = question.instructions
     ? `<p class="question-instructions">${escapeHtml(question.instructions)}</p>`
     : "";
@@ -72,7 +72,7 @@ function renderQuestion(question, questionNumber) {
 function renderAnswerKey(exam) {
   const entries = buildAnswerKeyEntries(exam);
   if (entries.length === 0) {
-    return '<p class="key-empty">No answer key entries were detected for this exam.</p>';
+    return '<p class="key-empty">No se detectaron respuestas para este examen.</p>';
   }
 
   const sections = new Map();
@@ -340,20 +340,20 @@ function buildExamHtml(examData) {
           <header class="exam-header">
             <h1>${escapeHtml(exam.title)}</h1>
             <div class="meta-grid">
-              <div class="meta-item"><span class="meta-label">Subject:</span> ${escapeHtml(exam.subject)}</div>
-              <div class="meta-item"><span class="meta-label">Grade:</span> ${escapeHtml(exam.grade)}</div>
-              <div class="meta-item"><span class="meta-label">Date:</span> ${escapeHtml(dateValue)}</div>
-              <div class="meta-item"><span class="meta-label">Questions:</span> ${questionNumber - 1}</div>
+              <div class="meta-item"><span class="meta-label">Materia:</span> ${escapeHtml(exam.subject)}</div>
+              <div class="meta-item"><span class="meta-label">Curso:</span> ${escapeHtml(exam.grade)}</div>
+              <div class="meta-item"><span class="meta-label">Fecha:</span> ${escapeHtml(dateValue)}</div>
+              <div class="meta-item"><span class="meta-label">Preguntas:</span> ${questionNumber - 1}</div>
             </div>
           </header>
 
           <section class="student-row">
             <div>
-              <div class="meta-label">Student Name</div>
+              <div class="meta-label">Nombre del Estudiante</div>
               <div class="field-box"></div>
             </div>
             <div>
-              <div class="meta-label">Student Date</div>
+              <div class="meta-label">Fecha</div>
               <div class="field-box"></div>
             </div>
           </section>
@@ -362,7 +362,7 @@ function buildExamHtml(examData) {
             exam.instructions
               ? `
                 <section class="instructions-box">
-                  <h3>General Instructions</h3>
+                  <h3>Instrucciones Generales</h3>
                   <p>${escapeHtml(exam.instructions)}</p>
                 </section>
               `
@@ -373,7 +373,7 @@ function buildExamHtml(examData) {
         </main>
 
         <section class="answer-key-page">
-          <h2>Answer Key</h2>
+          <h2>Clave de Respuestas</h2>
           ${renderAnswerKey(exam)}
         </section>
       </body>

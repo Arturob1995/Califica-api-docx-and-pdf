@@ -52,7 +52,7 @@ async function generatePdf(examData) {
       document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()
     );
 
-    const headerTitle = sanitizeHeaderText(exam.title || "Exam");
+    const headerTitle = sanitizeHeaderText(exam.title || "Examen");
     const pdfPromise = page.pdf({
       format: "A4",
       margin: {

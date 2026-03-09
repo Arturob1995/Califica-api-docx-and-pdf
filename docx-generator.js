@@ -74,12 +74,12 @@ function metadataTable(exam, dateValue, totalQuestions) {
           new TableCell({
             borders,
             width: { size: 50, type: WidthType.PERCENTAGE },
-            children: [normalParagraph(`Subject: ${exam.subject}`, { bold: true, after: 60 })]
+            children: [normalParagraph(`Materia: ${exam.subject}`, { bold: true, after: 60 })]
           }),
           new TableCell({
             borders,
             width: { size: 50, type: WidthType.PERCENTAGE },
-            children: [normalParagraph(`Grade: ${exam.grade}`, { bold: true, after: 60 })]
+            children: [normalParagraph(`Curso: ${exam.grade}`, { bold: true, after: 60 })]
           })
         ]
       }),
@@ -88,12 +88,12 @@ function metadataTable(exam, dateValue, totalQuestions) {
           new TableCell({
             borders,
             width: { size: 50, type: WidthType.PERCENTAGE },
-            children: [normalParagraph(`Date: ${dateValue}`, { after: 60 })]
+            children: [normalParagraph(`Fecha: ${dateValue}`, { after: 60 })]
           }),
           new TableCell({
             borders,
             width: { size: 50, type: WidthType.PERCENTAGE },
-            children: [normalParagraph(`Questions: ${totalQuestions}`, { after: 60 })]
+            children: [normalParagraph(`Preguntas: ${totalQuestions}`, { after: 60 })]
           })
         ]
       }),
@@ -103,7 +103,7 @@ function metadataTable(exam, dateValue, totalQuestions) {
             borders,
             width: { size: 70, type: WidthType.PERCENTAGE },
             children: [
-              normalParagraph("Student Name: ________________________________", {
+              normalParagraph("Nombre del Estudiante: ________________________________", {
                 after: 60
               })
             ]
@@ -111,7 +111,7 @@ function metadataTable(exam, dateValue, totalQuestions) {
           new TableCell({
             borders,
             width: { size: 30, type: WidthType.PERCENTAGE },
-            children: [normalParagraph("Student Date: _______________", { after: 60 })]
+            children: [normalParagraph("Fecha: _______________", { after: 60 })]
           })
         ]
       })
@@ -121,7 +121,7 @@ function metadataTable(exam, dateValue, totalQuestions) {
 
 function renderQuestionParagraphs(question, questionNumber) {
   const blocks = [];
-  const questionText = question.text || "Question";
+  const questionText = question.text || "Pregunta";
 
   blocks.push(
     new Paragraph({
@@ -181,7 +181,7 @@ function renderAnswerKeyBlocks(exam) {
       },
       children: [
         new TextRun({
-          text: "Answer Key",
+          text: "Clave de Respuestas",
           bold: true,
           color: "0F3B82",
           font: "Calibri"
@@ -191,7 +191,7 @@ function renderAnswerKeyBlocks(exam) {
   ];
 
   if (entries.length === 0) {
-    blocks.push(normalParagraph("No answer key entries were detected for this exam.", { italics: true }));
+    blocks.push(normalParagraph("No se detectaron respuestas para este examen.", { italics: true }));
     return blocks;
   }
 
@@ -239,7 +239,7 @@ async function generateDocx(examData) {
   ];
 
   if (exam.instructions) {
-    body.push(sectionHeading("General Instructions"));
+    body.push(sectionHeading("Instrucciones Generales"));
     body.push(normalParagraph(exam.instructions, { color: "374151" }));
   }
 
@@ -252,7 +252,7 @@ async function generateDocx(examData) {
     }
 
     if (section.passage) {
-      body.push(normalParagraph("Reading passage:", { bold: true, after: 60 }));
+      body.push(normalParagraph("Texto de lectura:", { bold: true, after: 60 }));
       body.push(normalParagraph(section.passage, { color: "1F2937" }));
     }
 

@@ -184,7 +184,7 @@ function normalizeSection(rawSection, index) {
       rawSection?.title,
       rawSection?.section_title,
       rawSection?.name,
-      `Section ${index + 1}`
+      `Sección ${index + 1}`
     ),
     instructions: firstNonEmpty(
       rawSection?.instructions,
@@ -224,7 +224,7 @@ function normalizeExamData(examData) {
       safeExamData.title,
       safeExamData.examTitle,
       safeExamData.exam_title,
-      "Exam"
+      "Examen"
     ),
     subject: firstNonEmpty(safeExamData.subject, safeExamData.course, safeExamData.area, "General"),
     grade: firstNonEmpty(safeExamData.grade, safeExamData.gradeLevel, safeExamData.level, "N/A"),
