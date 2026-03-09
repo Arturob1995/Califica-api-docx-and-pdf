@@ -64,12 +64,12 @@ async function generatePdf(examData) {
       printBackground: true,
       displayHeaderFooter: true,
       headerTemplate: `
-        <div style="width: 100%; text-align: center; font-size: 8px; color: #6b7280; padding: 0 10mm;">
+        <div style="width: 100%; text-align: center; font-size: 8px; color: #7D7D7D; padding: 0 10mm;">
           ${headerTitle}
         </div>
       `,
       footerTemplate: `
-        <div style="width: 100%; text-align: center; font-size: 8px; color: #6b7280;">
+        <div style="width: 100%; text-align: center; font-size: 8px; color: #7D7D7D;">
           <span class="pageNumber"></span> / <span class="totalPages"></span>
         </div>
       `

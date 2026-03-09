@@ -144,7 +144,7 @@ function buildExamHtml(examData) {
 
           body {
             margin: 0;
-            color: #1f2933;
+            color: #4C4C4C;
             font-family: "Nunito", "Segoe UI", Arial, sans-serif;
             font-size: 12.2pt;
             line-height: 1.45;
@@ -155,19 +155,19 @@ function buildExamHtml(examData) {
           }
 
           .exam-header {
-            border-bottom: 2px solid #d8e2ee;
+            border-bottom: 2px solid #D9D9D9;
             margin-bottom: 14px;
             padding-bottom: 12px;
           }
 
           .exam-header h1 {
-            color: #0f172a;
+            color: #1F1F1F;
             font-size: 19pt;
             margin: 0 0 10px;
           }
 
           .meta-grid {
-            border: 1px solid #d8e2ee;
+            border: 1px solid #D9D9D9;
             border-radius: 8px;
             display: grid;
             gap: 8px;
@@ -180,7 +180,7 @@ function buildExamHtml(examData) {
           }
 
           .meta-label {
-            color: #52606d;
+            color: #616161;
             font-weight: 700;
             margin-right: 4px;
           }
@@ -193,21 +193,21 @@ function buildExamHtml(examData) {
           }
 
           .field-box {
-            border-bottom: 1px solid #a0aec0;
+            border-bottom: 1px solid #D9D9D9;
             min-height: 23px;
             padding-bottom: 4px;
           }
 
           .instructions-box {
-            background: #f7fafc;
-            border: 1px solid #d8e2ee;
+            background: #F5F3F0;
+            border: 1px solid #D9D9D9;
             border-radius: 8px;
             margin: 12px 0 16px;
             padding: 10px 12px;
           }
 
           .instructions-box h3 {
-            color: #334e68;
+            color: #FF6768;
             font-size: 11.4pt;
             margin: 0 0 4px;
             text-transform: uppercase;
@@ -224,23 +224,23 @@ function buildExamHtml(examData) {
           }
 
           .exam-section h2 {
-            border-left: 4px solid #3b82f6;
-            color: #102a43;
+            border-left: 4px solid #FF6768;
+            color: #2F4060;
             font-size: 13pt;
             margin: 0 0 6px;
             padding-left: 10px;
           }
 
           .section-instructions {
-            color: #486581;
+            color: #616161;
             font-style: italic;
             margin: 0 0 8px;
             white-space: pre-wrap;
           }
 
           .passage {
-            background: #f8fbff;
-            border: 1px solid #d9e6f2;
+            background: #F5F3F0;
+            border: 1px solid #D9D9D9;
             border-radius: 6px;
             margin-bottom: 10px;
             padding: 10px;
@@ -262,7 +262,7 @@ function buildExamHtml(examData) {
           }
 
           .question-instructions {
-            color: #52606d;
+            color: #616161;
             font-size: 10.4pt;
             font-style: italic;
             margin: 0 0 5px;
@@ -284,12 +284,12 @@ function buildExamHtml(examData) {
           }
 
           .answer-placeholder {
-            color: #334e68;
+            color: #2F4060;
             margin: 0;
           }
 
           .open-lines .line {
-            border-bottom: 1px solid #9aa5b1;
+            border-bottom: 1px solid #D9D9D9;
             height: 18px;
             margin-bottom: 4px;
           }
@@ -300,7 +300,7 @@ function buildExamHtml(examData) {
           }
 
           .answer-key-page h2 {
-            color: #0b4f85;
+            color: #FF6768;
             font-size: 16pt;
             margin: 0 0 10px;
           }
@@ -311,8 +311,8 @@ function buildExamHtml(examData) {
           }
 
           .answer-key-section h3 {
-            border-bottom: 1px solid #c3d5e5;
-            color: #1e3a5f;
+            border-bottom: 1px solid #D9D9D9;
+            color: #2F4060;
             font-size: 12pt;
             margin: 0 0 6px;
             padding-bottom: 3px;
@@ -329,7 +329,7 @@ function buildExamHtml(examData) {
           }
 
           .key-empty {
-            color: #52606d;
+            color: #616161;
             font-style: italic;
             margin: 8px 0 0;
           }

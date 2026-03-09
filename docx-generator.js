@@ -24,7 +24,7 @@ function sectionHeading(text) {
       new TextRun({
         text,
         bold: true,
-        color: "1E3A8A",
+        color: "2F4060",
         font: "Calibri"
       })
     ]
@@ -55,7 +55,7 @@ function normalParagraph(text, options = {}) {
 }
 
 function metadataTable(exam, dateValue, totalQuestions) {
-  const borderColor = "D1D5DB";
+  const borderColor = "D9D9D9";
   const borders = {
     top: { style: BorderStyle.SINGLE, size: 1, color: borderColor },
     bottom: { style: BorderStyle.SINGLE, size: 1, color: borderColor },
@@ -143,7 +143,7 @@ function renderQuestionParagraphs(question, questionNumber) {
   );
 
   if (question.instructions) {
-    blocks.push(normalParagraph(question.instructions, { italics: true, color: "4B5563", after: 80 }));
+    blocks.push(normalParagraph(question.instructions, { italics: true, color: "616161", after: 80 }));
   }
 
   if (question.type === "multiple_choice") {
@@ -183,7 +183,7 @@ function renderAnswerKeyBlocks(exam) {
         new TextRun({
           text: "Clave de Respuestas",
           bold: true,
-          color: "0F3B82",
+          color: "FF6768",
           font: "Calibri"
         })
       ]
@@ -230,7 +230,7 @@ async function generateDocx(examData) {
         new TextRun({
           text: exam.title,
           bold: true,
-          color: "0F172A",
+          color: "1F1F1F",
           font: "Calibri"
         })
       ]
@@ -240,7 +240,7 @@ async function generateDocx(examData) {
 
   if (exam.instructions) {
     body.push(sectionHeading("Instrucciones Generales"));
-    body.push(normalParagraph(exam.instructions, { color: "374151" }));
+    body.push(normalParagraph(exam.instructions, { color: "4C4C4C" }));
   }
 
   let questionNumber = 1;
@@ -248,12 +248,12 @@ async function generateDocx(examData) {
     body.push(sectionHeading(section.title));
 
     if (section.instructions) {
-      body.push(normalParagraph(section.instructions, { italics: true, color: "4B5563" }));
+      body.push(normalParagraph(section.instructions, { italics: true, color: "616161" }));
     }
 
     if (section.passage) {
       body.push(normalParagraph("Texto de lectura:", { bold: true, after: 60 }));
-      body.push(normalParagraph(section.passage, { color: "1F2937" }));
+      body.push(normalParagraph(section.passage, { color: "4C4C4C" }));
     }
 
     for (const question of section.questions) {
