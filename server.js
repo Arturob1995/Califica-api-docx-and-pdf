@@ -5,6 +5,8 @@ const { generateDocx } = require("./docx-generator");
 const { normalizeExamData } = require("./exam-utils");
 const { generatePDCDocx } = require("./generate-pdc-docx");
 const { generatePDCPdf, closePDCBrowser } = require("./generate-pdc-pdf");
+const { generatePresentationPdf, closePresentationBrowser } = require("./generate-presentation-pdf");
+const { generatePresentationPptx } = require("./generate-presentation-pptx");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -346,6 +348,67 @@ app.post("/generate/pdc/pdf", async (req, res) => {
   }
 });
 
+// ─── Presentation endpoints ─────────────────────────────────────────
+
+function extractPresentationData(body) {
+  if (body && typeof body === "object" && !Array.isArray(body) && Array.isArray(body.slides)) return body;
+  if (typeof body === "string") {
+    try { const parsed = JSON.parse(body); if (parsed && Array.isArray(parsed.slides)) return parsed; } catch (_) {}
+  }
+  if (body && typeof body === "object") {
+    for (const key of ["data", "payload", "presentationData"]) {
+      const val = body[key];
+      if (val && typeof val === "object" && Array.isArray(val.slides)) return val;
+      if (typeof val === "string") {
+        try { const p = JSON.parse(val); if (p && Array.isArray(p.slides)) return p; } catch (_) {}
+      }
+    }
+  }
+  return null;
+}
+
+app.post("/generate/presentation/pdf", async (req, res) => {
+  try {
+    const data = extractPresentationData(req.body);
+    if (!data || !Array.isArray(data.slides) || data.slides.length === 0) {
+      return res.status(400).json({ error: "Missing or empty slides array" });
+    }
+    const pdfBuf = await generatePresentationPdf(data);
+    const title = (data.meta && data.meta.titulo) || "presentacion";
+    const filename = `${safeFileName(title)}.pdf`;
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Length": pdfBuf.length,
+      "Content-Transfer-Encoding": "binary",
+      "Cache-Control": "no-store",
+    });
+    res.end(pdfBuf, "binary");
+  } catch (err) {
+    console.error("Presentation PDF error:", err);
+    res.status(500).json({ error: "Failed to generate presentation PDF", details: err.message });
+  }
+});
+
+app.post("/generate/presentation/pptx", async (req, res) => {
+  try {
+    const data = extractPresentationData(req.body);
+    if (!data || !Array.isArray(data.slides) || data.slides.length === 0) {
+      return res.status(400).json({ error: "Missing or empty slides array" });
+    }
+    const pptxBuf = await generatePresentationPptx(data);
+    const title = (data.meta && data.meta.titulo) || "presentacion";
+    const filename = `${safeFileName(title)}.pptx`;
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", pptxBuf.length);
+    res.send(pptxBuf);
+  } catch (err) {
+    console.error("Presentation PPTX error:", err);
+    res.status(500).json({ error: "Failed to generate presentation PPTX", details: err.message });
+  }
+});
+
 app.use((req, res) => {
   res.status(404).json({ error: "Not found" });
 });
@@ -360,6 +423,7 @@ async function shutdown(signal) {
   try {
     await closeBrowser();
     await closePDCBrowser();
+    await closePresentationBrowser();
   } catch (error) {
     console.error("Error while closing browser:", error);
   }
