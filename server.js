@@ -7,6 +7,7 @@ const { generatePDCDocx } = require("./generate-pdc-docx");
 const { generatePDCPdf, closePDCBrowser } = require("./generate-pdc-pdf");
 const { generatePresentationPdf, closePresentationBrowser } = require("./generate-presentation-pdf");
 const { generatePresentationPptx } = require("./generate-presentation-pptx");
+const { generateCertificadoPdf } = require("./generate-certificado-pdf");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -406,6 +407,43 @@ app.post("/generate/presentation/pptx", async (req, res) => {
   } catch (err) {
     console.error("Presentation PPTX error:", err);
     res.status(500).json({ error: "Failed to generate presentation PPTX", details: err.message });
+  }
+});
+
+// ─── Certificado endpoint ───────────────────────────────────────────
+
+app.post("/generate/certificado/pdf", authenticateApiKey, async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data || !data.nombre) {
+      return res.status(400).json({ error: "Missing: nombre" });
+    }
+    const pdfBuffer = await generateCertificadoPdf(data);
+    const fileName = "Certificado.pdf";
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Length", String(pdfBuffer.length));
+    res.setHeader("Content-Transfer-Encoding", "binary");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    return res.status(200).end(pdfBuffer);
+  } catch (err) {
+    console.error("Certificado PDF error:", err);
+    res.status(500).json({ error: "Failed to generate certificado", details: err.message });
+  }
+});
+
+app.post("/generate/certificado/pdf-json", authenticateApiKey, async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data || !data.nombre) {
+      return res.status(400).json({ error: "Missing: nombre" });
+    }
+    const pdfBuffer = await generateCertificadoPdf(data);
+    return res.status(200).json(toFilePayload(pdfBuffer, "Certificado.pdf", "application/pdf"));
+  } catch (err) {
+    console.error("Certificado PDF-JSON error:", err);
+    res.status(500).json({ error: "Failed to generate certificado", details: err.message });
   }
 });
 
