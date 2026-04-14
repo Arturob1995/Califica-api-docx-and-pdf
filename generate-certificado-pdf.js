@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 
 const TEMPLATE_URL =
-  "https://pub-e293afe63be64d2da97167b633315f0c.r2.dev/certificados/CERTIFICADO1.docx";
+  "https://21ef14ceede06d8f2ec712516a20a8e7.cdn.bubble.io/f1766795252176x426320161281840830/Diploma%20Califica%20-%20BASE.docx";
 
 /** Cache the template buffer so we only download it once per deploy */
 let cachedTemplate = null;
