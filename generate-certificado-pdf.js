@@ -38,6 +38,8 @@ async function generateCertificadoPdf(data) {
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
+    // Don't throw on missing placeholders — replace with empty string
+    nullGetter() { return ""; },
   });
 
   doc.render({
