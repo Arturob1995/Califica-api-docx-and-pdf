@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { generatePdf, closeBrowser } = require("./pdf-generator");
+const { generatePdf, generatePdfFromHtml, closeBrowser } = require("./pdf-generator");
 const { generateDocx } = require("./docx-generator");
 const { normalizeExamData } = require("./exam-utils");
 const { generatePDCDocx } = require("./generate-pdc-docx");
@@ -288,6 +288,36 @@ app.post("/docx-json", authenticateApiKey, async (req, res) => {
   } catch (error) {
     console.error("DOCX JSON generation failed:", error);
     return res.status(500).json({ error: "DOCX JSON generation failed" });
+  }
+});
+
+// Generic PDF-from-HTML endpoint. The Next.js side (Califica web) builds the
+// HTML server-side from a typed body schema (FichaLibreBody) and forwards it
+// here so Puppeteer + Nunito can do the rendering. Used by "Crea tu ficha"
+// download → PDF flow. Keeps DOM scraping and edit affordances out of the PDF.
+app.post("/pdf-html", authenticateApiKey, async (req, res) => {
+  try {
+    const { html, title, format, margin } = req.body || {};
+    if (!html || typeof html !== "string") {
+      return res.status(400).json({ error: "Missing or invalid 'html' field" });
+    }
+
+    const allowedFormats = new Set(["Letter", "A4"]);
+    const safeFormat = allowedFormats.has(format) ? format : "Letter";
+    const safeMargin = typeof margin === "string" && margin.length > 0 && margin.length <= 20 ? margin : "0.5in";
+
+    const pdfBuffer = await generatePdfFromHtml(html, { format: safeFormat, margin: safeMargin });
+    const fileName = `${safeFileName(title || "ficha")}.pdf`;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Length", String(pdfBuffer.length));
+    res.setHeader("Content-Transfer-Encoding", "binary");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    return res.status(200).end(pdfBuffer);
+  } catch (error) {
+    console.error("PDF-HTML generation failed:", error);
+    return res.status(500).json({ error: "PDF generation failed" });
   }
 });
 
