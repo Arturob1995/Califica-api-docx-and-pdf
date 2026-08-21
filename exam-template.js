@@ -1,4 +1,4 @@
-const { normalizeExamData, buildAnswerKeyEntries } = require("./exam-utils");
+const { normalizeExamData, buildAnswerKeyEntries, encabezadoLabels } = require("./exam-utils");
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -106,7 +106,13 @@ function renderAnswerKey(exam) {
 
 function buildExamHtml(examData) {
   const exam = normalizeExamData(examData);
-  const dateValue = exam.date || new Date().toISOString().slice(0, 10);
+  const labels = encabezadoLabels(exam.pais);
+  // La fecha SOLO se imprime si el que llama la mandó explícitamente. Antes caía
+  // a `new Date()`: la fecha en que la docente DESCARGA, no la del examen, y en
+  // ISO, que nadie escribe a mano en Latinoamérica. Imprime el martes, aplica el
+  // viernes, y la hoja nace con la fecha equivocada. Sin fecha va la casilla en
+  // blanco de la fila de abajo, que ya existía.
+  const dateValue = exam.date || "";
 
   let questionNumber = 1;
   const sectionsHtml = exam.sections
@@ -166,12 +172,15 @@ function buildExamHtml(examData) {
             margin: 0 0 10px;
           }
 
+          /* Tres datos que ya sabemos (materia, grado, cuántas preguntas). La
+             fecha salió de acá: se llena a mano, así que vive en la fila de
+             casillas de abajo. */
           .meta-grid {
             border: 1px solid #D9D9D9;
             border-radius: 8px;
             display: grid;
             gap: 8px;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             padding: 10px 12px;
           }
 
@@ -185,10 +194,13 @@ function buildExamHtml(examData) {
             margin-right: 4px;
           }
 
+          /* Nombre y apellidos manda; sección, fecha y nota son casillas cortas
+             que se llenan a mano. Cuatro columnas: si se agrega una quinta,
+             revisar que el nombre no quede sin espacio para escribirlo. */
           .student-row {
             display: grid;
             gap: 14px;
-            grid-template-columns: 1fr 220px;
+            grid-template-columns: 2fr 1fr 1fr 0.8fr;
             margin-bottom: 12px;
           }
 
@@ -341,19 +353,26 @@ function buildExamHtml(examData) {
             <h1>${escapeHtml(exam.title)}</h1>
             <div class="meta-grid">
               <div class="meta-item"><span class="meta-label">Materia:</span> ${escapeHtml(exam.subject)}</div>
-              <div class="meta-item"><span class="meta-label">Curso:</span> ${escapeHtml(exam.grade)}</div>
-              <div class="meta-item"><span class="meta-label">Fecha:</span> ${escapeHtml(dateValue)}</div>
+              <div class="meta-item"><span class="meta-label">${escapeHtml(labels.grado)}:</span> ${escapeHtml(exam.grade)}</div>
               <div class="meta-item"><span class="meta-label">Preguntas:</span> ${questionNumber - 1}</div>
             </div>
           </header>
 
           <section class="student-row">
             <div>
-              <div class="meta-label">Nombre del Estudiante</div>
+              <div class="meta-label">Nombre y apellidos</div>
+              <div class="field-box"></div>
+            </div>
+            <div>
+              <div class="meta-label">${escapeHtml(labels.seccion)}</div>
               <div class="field-box"></div>
             </div>
             <div>
               <div class="meta-label">Fecha</div>
+              <div class="field-box">${escapeHtml(dateValue)}</div>
+            </div>
+            <div>
+              <div class="meta-label">Nota</div>
               <div class="field-box"></div>
             </div>
           </section>

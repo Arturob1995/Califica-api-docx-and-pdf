@@ -209,6 +209,46 @@ function normalizeSection(rawSection, index) {
   };
 }
 
+/**
+ * Como rotula cada pais las dos casillas de identificacion del encabezado: la
+ * del GRADO y la de la SECCION.
+ *
+ *   PE, CO, BO, AR... ->  Grado: 5.o de primaria  ·  Seccion: ____
+ *   Mexico            ->  Grado: 3.o              ·  Grupo:    ____
+ *   Ecuador           ->  Grado: 7.o              ·  Paralelo: ____
+ *   Chile             ->  Curso: 5.o Basico       ·  Seccion:  ____
+ *
+ * En MX y EC el termino del grupo-clase ES el de la seccion; en Chile pasa al
+ * reves: "curso" es el GRADO, asi que se usa del otro lado.
+ *
+ * OJO: es el espejo de `encabezadoLabels()` en `lib/config/aula-labels.ts` del
+ * repo de la app (Califica). Si cambia alla, cambia aca: el mismo examen se baja
+ * en Word (armado por la app) y en PDF (armado por este servicio) y no pueden
+ * decir cosas distintas.
+ *
+ * Hasta ago-2026 esto no existia: el encabezado decia "Curso:" para los 21
+ * paises, o sea el termino chileno en la hoja de una docente de Peru o Mexico.
+ */
+const LABELS_NEUTRO = { grado: "Grado", seccion: "Sección" };
+const LABELS_POR_PAIS = {
+  chile: { grado: "Curso", seccion: "Sección" },
+  mexico: { grado: "Grado", seccion: "Grupo" },
+  ecuador: { grado: "Grado", seccion: "Paralelo" }
+};
+const ISO_A_PAIS = { cl: "chile", mx: "mexico", ec: "ecuador" };
+
+function encabezadoLabels(pais) {
+  if (!pais || typeof pais !== "string") {
+    return LABELS_NEUTRO;
+  }
+  const n = pais
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim();
+  return LABELS_POR_PAIS[n] || LABELS_POR_PAIS[ISO_A_PAIS[n]] || LABELS_NEUTRO;
+}
+
 function normalizeExamData(examData) {
   const safeExamData = examData && typeof examData === "object" ? examData : {};
   const rawSections = asArray(
@@ -229,6 +269,9 @@ function normalizeExamData(examData) {
     subject: firstNonEmpty(safeExamData.subject, safeExamData.course, safeExamData.area, "General"),
     grade: firstNonEmpty(safeExamData.grade, safeExamData.gradeLevel, safeExamData.level, "N/A"),
     date: firstNonEmpty(safeExamData.date, safeExamData.examDate),
+    // Pais de la docente (nombre o ISO). Lo manda la app en el mismo payload;
+    // vacio -> rotulos neutros, que es lo que ve cualquier pais sin termino propio.
+    pais: firstNonEmpty(safeExamData.pais, safeExamData.country),
     instructions: firstNonEmpty(
       safeExamData.instructions,
       safeExamData.generalInstructions,
@@ -371,5 +414,6 @@ function buildAnswerKeyEntries(normalizedExam) {
 
 module.exports = {
   normalizeExamData,
-  buildAnswerKeyEntries
+  buildAnswerKeyEntries,
+  encabezadoLabels
 };

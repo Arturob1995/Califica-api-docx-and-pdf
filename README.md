@@ -16,6 +16,16 @@ Request body can be either:
 - raw exam object: `{ "title": "...", "sections": [...] }`
 - wrapped exam object: `{ "examData": { ... } }` (also supports `data`, `payload`, or `exam`)
 
+Optional fields on the exam object:
+- `pais` — teacher's country, name or ISO (`"Perú"`, `"MX"`). Only labels the two
+  identification boxes of the header: `Grado`+`Sección` by default, `Grado`+`Grupo` (MX),
+  `Grado`+`Paralelo` (EC), `Curso`+`Sección` (CL). Unknown/missing → the neutral labels.
+  Keep it in sync with `lib/config/aula-labels.ts` in the Califica app repo: the same exam
+  is downloaded as Word (built by the app) and as PDF (built here), and they can't disagree.
+- `date` — printed in the header. **Omit it** and the box is left blank for the student to
+  fill in. It used to default to today's date, which is the day of the *download*, not the
+  day of the exam.
+
 `/pdf-json` and `/docx-json` return this shape:
 
 ```json

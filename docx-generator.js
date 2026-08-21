@@ -11,7 +11,7 @@ const {
   TextRun,
   WidthType
 } = require("docx");
-const { normalizeExamData, buildAnswerKeyEntries } = require("./exam-utils");
+const { normalizeExamData, buildAnswerKeyEntries, encabezadoLabels } = require("./exam-utils");
 
 function sectionHeading(text) {
   return new Paragraph({
@@ -54,7 +54,14 @@ function normalParagraph(text, options = {}) {
   });
 }
 
+// Encabezado del examen. Espejo del que arma la app en
+// `lib/utils/examenDocxBuilder.ts` (Califica): mismo orden, mismos rótulos y las
+// mismas casillas en blanco. Si cambia uno, cambia el otro — es el mismo examen.
+//
+// OJO: `Curso:` estaba fijo para los 21 países, o sea el término chileno en la
+// hoja de una docente de Perú. Ahora lo resuelve `encabezadoLabels(pais)`.
 function metadataTable(exam, dateValue, totalQuestions) {
+  const labels = encabezadoLabels(exam.pais);
   const borderColor = "D9D9D9";
   const borders = {
     top: { style: BorderStyle.SINGLE, size: 1, color: borderColor },
@@ -79,7 +86,7 @@ function metadataTable(exam, dateValue, totalQuestions) {
           new TableCell({
             borders,
             width: { size: 50, type: WidthType.PERCENTAGE },
-            children: [normalParagraph(`Curso: ${exam.grade}`, { bold: true, after: 60 })]
+            children: [normalParagraph(`${labels.grado}: ${exam.grade}`, { bold: true, after: 60 })]
           })
         ]
       }),
@@ -87,12 +94,17 @@ function metadataTable(exam, dateValue, totalQuestions) {
         children: [
           new TableCell({
             borders,
-            width: { size: 50, type: WidthType.PERCENTAGE },
-            children: [normalParagraph(`Fecha: ${dateValue}`, { after: 60 })]
+            width: { size: 35, type: WidthType.PERCENTAGE },
+            children: [normalParagraph(`${labels.seccion}: ____________`, { after: 60 })]
           }),
           new TableCell({
             borders,
-            width: { size: 50, type: WidthType.PERCENTAGE },
+            width: { size: 35, type: WidthType.PERCENTAGE },
+            children: [normalParagraph(`Fecha: ${dateValue || "____________"}`, { after: 60 })]
+          }),
+          new TableCell({
+            borders,
+            width: { size: 30, type: WidthType.PERCENTAGE },
             children: [normalParagraph(`Preguntas: ${totalQuestions}`, { after: 60 })]
           })
         ]
@@ -103,7 +115,7 @@ function metadataTable(exam, dateValue, totalQuestions) {
             borders,
             width: { size: 70, type: WidthType.PERCENTAGE },
             children: [
-              normalParagraph("Nombre del Estudiante: ________________________________", {
+              normalParagraph("Nombre y apellidos: ______________________________", {
                 after: 60
               })
             ]
@@ -111,7 +123,7 @@ function metadataTable(exam, dateValue, totalQuestions) {
           new TableCell({
             borders,
             width: { size: 30, type: WidthType.PERCENTAGE },
-            children: [normalParagraph("Fecha: _______________", { after: 60 })]
+            children: [normalParagraph("Nota: ____________", { after: 60 })]
           })
         ]
       })
@@ -215,7 +227,9 @@ function renderAnswerKeyBlocks(exam) {
 
 async function generateDocx(examData) {
   const exam = normalizeExamData(examData);
-  const dateValue = exam.date || new Date().toISOString().slice(0, 10);
+  // Sin fecha explícita del que llama, la casilla va EN BLANCO. Antes caía a
+  // `new Date()`: la fecha en que se descarga, no la del examen.
+  const dateValue = exam.date || "";
   const totalQuestions = exam.sections.reduce(
     (count, section) => count + section.questions.length,
     0
